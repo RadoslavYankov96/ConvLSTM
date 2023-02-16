@@ -1,11 +1,6 @@
-import tensorflow as tf
 from tensorflow import keras
 from keras import layers
-from keras.layers import ConvLSTM2D, BatchNormalization, MaxPooling3D, Conv3D
-
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
+from keras.layers import ConvLSTM2D, BatchNormalization, MaxPooling3D
 
 
 class SequencePredictor(keras.Sequential):
@@ -35,7 +30,7 @@ class SequencePredictor(keras.Sequential):
             self.add(ConvLSTM2D(filters=self.filters[i], kernel_size=self.kernel, padding='same', activation='tanh',
                                 recurrent_activation='hard_sigmoid', input_shape=self.input_format,
                                 return_sequences=True))
-            self.add(keras.layers.ReLU())
+            self.add(keras.layers.LeakyReLU())
             self.add(BatchNormalization())
             self.add(MaxPooling3D(pool_size=self.pool, padding='same'))
 
@@ -44,7 +39,7 @@ class SequencePredictor(keras.Sequential):
             self.add(layers.UpSampling3D(size=self.pool))
             self.add(ConvLSTM2D(filters=self.filters[i], kernel_size=self.kernel, padding='same', activation='tanh',
                                 recurrent_activation='hard_sigmoid', return_sequences=True))
-            self.add(layers.ReLU())
+            self.add(layers.LeakyReLU())
             self.add(BatchNormalization())
         self.add(ConvLSTM2D(filters=2, kernel_size=self.kernel, padding='same', activation='tanh',
                             recurrent_activation='hard_sigmoid', return_sequences=True))
