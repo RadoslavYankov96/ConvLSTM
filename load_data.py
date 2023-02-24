@@ -1,13 +1,13 @@
-import tensorflow as tf
-import tensorflow_datasets as tfds
+from models import SequencePredictor
+from prepare_data import ImageSequenceDataset
 
-import os
-import operator
-import cv2
-import PIL.Image as Image
-import numpy as np
-import h5py as h5
-import matplotlib.pyplot as plt
+data = ImageSequenceDataset("C:\\Users\\rados\\Desktop\\studies\\thesis\\code\\ConvLSTM\\dataset\\",
+                            2, 4, 4, (520, 640, 1))
 
+dataset = data.create_dataset()
+model = SequencePredictor(5, 3, [16, 32, 32], 2, [2, 520, 640, 1], (1, 2, 2))
+model.build_model()
+model.summary()
 
-
+model.compile(loss='mse', optimizer='adam')
+model.fit(dataset, epochs=10)

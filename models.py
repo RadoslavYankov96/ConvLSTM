@@ -49,9 +49,6 @@ class SequencePredictor(keras.Sequential):
         self.build_decoder()
 
 
-first_model = SequencePredictor(5, 3, [16, 32, 32], 2, [2, 600, 400, 2], (1, 2, 2))
-first_model.build_model()
-first_model.summary()
 
 '''this is just an example for trying out
 the idea is to create dictionaries with parameters 
