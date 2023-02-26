@@ -1,13 +1,19 @@
-from models import SequencePredictor
-from prepare_data import ImageSequenceDataset
+from models import NextSequencePredictor
+from prepare_dataset import ImageSequenceDataset
+import tensorflow as tf
 
-data = ImageSequenceDataset("C:\\Users\\rados\\Desktop\\studies\\thesis\\code\\ConvLSTM\\dataset\\",
-                            2, 4, 4, (520, 640, 1))
+physical_devices = tf.config.list_physical_devices('GPU')
+tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
-dataset = data.create_dataset()
-model = SequencePredictor(5, 3, [16, 32, 32], 2, [2, 520, 640, 1], (1, 2, 2))
-model.build_model()
-model.summary()
+data_train = ImageSequenceDataset("C:\\Users\\rados\\Desktop\\studies\\thesis\\code\\ConvLSTM\\dataset\\train\\",
+                                  2, 1, 4, (512, 640, 1))
+data_test = ImageSequenceDataset("C:\\Users\\rados\\Desktop\\studies\\thesis\\code\\ConvLSTM\\dataset\\test\\",
+                                 2, 1, 4, (512, 640, 1))
 
-model.compile(loss='mse', optimizer='adam')
-model.fit(dataset, epochs=10)
+dataset_train = data_train.create_dataset()
+dataset_test = data_test.create_dataset()
+model = NextSequencePredictor()
+
+model.compile(loss='mse', optimizer='adam', metrics='mae')
+model.fit(dataset_train, epochs=15)
+model.evaluate(dataset_test, verbose=2)

@@ -44,16 +44,3 @@ class ImageSequenceDataset:
         dataset = dataset.batch(self.batch_size)
         dataset = dataset.shuffle(buffer_size=5)
         return dataset
-
-
-
-def main():
-    data = ImageSequenceDataset("C:\\Users\\rados\\Desktop\\studies\\thesis\\code\\ConvLSTM\\dataset\\",
-                                2, 4, 4, (512, 640))
-
-    dataset = data.create_dataset()
-    print("done")
-
-
-if __name__ == "__main__":
-    main()
