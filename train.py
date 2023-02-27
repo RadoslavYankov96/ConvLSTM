@@ -12,8 +12,11 @@ data_test = ImageSequenceDataset("C:\\Users\\rados\\Desktop\\studies\\thesis\\co
 
 dataset_train = data_train.create_dataset()
 dataset_test = data_test.create_dataset()
+
 model = NextSequencePredictor()
 
 model.compile(loss='mse', optimizer='adam', metrics='mae')
 model.fit(dataset_train, epochs=15)
 model.evaluate(dataset_test, verbose=2)
+# model.save_weights('saved_weights/') # , save_format='h5')
+# model.save('saved_models/')
