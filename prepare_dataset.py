@@ -6,12 +6,13 @@ import tensorflow as tf
 
 class ImageSequenceDataset:
 
-    def __init__(self, data_path, sequence_length, batch_size, starting_index, img_shape):
+    def __init__(self, data_path, sequence_length, batch_size, starting_index, img_shape, num_fans):
         self.data_path = data_path
         self.sequence_length = sequence_length
         self.batch_size = batch_size
         self.starting_index = starting_index
         self.img_shape = img_shape
+        self.num_fans = num_fans
 
     def load_experiment(self, file_path):
         with h5.File(file_path, 'r') as experiment:
@@ -35,12 +36,31 @@ class ImageSequenceDataset:
             for input_sequences, target_sequences in self.load_experiment(file_path):
                 yield input_sequences, target_sequences
 
+    @staticmethod
+    def get_metadata(file):
+        name_list = list(int(i) if i.isdigit() else i for i in file.split("_"))
+        fan_settings = np.array(name_list[3:6], dtype=np.float32)
+        return fan_settings
+
     def create_dataset(self):
         dataset = tf.data.Dataset.from_generator(self.load_data, output_signature=(
                                                  tf.TensorSpec(shape=(self.sequence_length, *self.img_shape),
                                                                dtype=tf.float32),
                                                  tf.TensorSpec(shape=(self.sequence_length, *self.img_shape),
                                                                dtype=tf.float32)))
+
         dataset = dataset.batch(self.batch_size)
         dataset = dataset.shuffle(buffer_size=5)
+
         return dataset
+
+
+def main():
+    dataset = ImageSequenceDataset("C:\\Users\\rados\\Desktop\\studies\\thesis\\code\\ConvLSTM\\dataset\\train\\",
+                                   2, 1, 4, (512, 640, 1), 3)
+    for element in dataset.load_data():
+        print(element)
+
+
+if __name__ == "__main__":
+    main()
