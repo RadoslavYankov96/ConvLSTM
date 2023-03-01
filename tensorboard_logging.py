@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras
 
-train_writer = tf.summary.create_file_writer("logs/train/")
+train_writer = tf.summary.create_file_writer("logs/train/full/")
 test_writer = tf.summary.create_file_writer("logs/test/")
 
 

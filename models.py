@@ -1,5 +1,6 @@
 from tensorflow import keras
 from keras import layers
+import numpy as np
 
 
 class ConvLSTMBlock(layers.Layer):
@@ -23,11 +24,15 @@ class EncCLSTMBlock(layers.Layer):
         self.CLSTM1 = ConvLSTMBlock(out_channels[0], kernel_size)
         self.CLSTM2 = ConvLSTMBlock(out_channels[1], kernel_size)
         self.CLSTM3 = ConvLSTMBlock(out_channels[2], kernel_size)
+        self.CLSTM4 = ConvLSTMBlock(out_channels[3], kernel_size)
+        self.CLSTM5 = ConvLSTMBlock(out_channels[4], kernel_size)
 
     def call(self, input_tensor, training=False, **kwargs):
         x = self.CLSTM1(input_tensor)
         x = self.CLSTM2(x)
         x = self.CLSTM3(x)
+        x = self.CLSTM4(x)
+        x = self.CLSTM5(x)
         return x
 
 
@@ -52,11 +57,15 @@ class DecCLSTMBlock(layers.Layer):
         self.DcLSTM1 = DeconvBlock(out_channels[0], kernel_size)
         self.DcLSTM2 = DeconvBlock(out_channels[1], kernel_size)
         self.DcLSTM3 = DeconvBlock(out_channels[2], kernel_size)
+        self.DcLSTM4 = DeconvBlock(out_channels[3], kernel_size)
+        self.DcLSTM5 = DeconvBlock(out_channels[4], kernel_size)
 
     def call(self, input_tensor, training=False, **kwargs):
         x = self.DcLSTM1(input_tensor)
         x = self.DcLSTM2(x)
         x = self.DcLSTM3(x)
+        x = self.DcLSTM4(x)
+        x = self.DcLSTM5(x)
         return x
 
 
@@ -68,23 +77,28 @@ class NextSequencePredictor(keras.Model):
 
     def __init__(self):
         super().__init__()
-        self.encoder = EncCLSTMBlock([16, 32, 64], 5)
-        '''self.flat = layers.Flatten()
+        self.encoder = EncCLSTMBlock([2, 4, 8, 16, 16], 5)
+        self.flat = layers.Flatten()
         self.dense1 = layers.Dense(256)
         self.bn1 = layers.BatchNormalization()
-        self.dense2 = layers.Dense(1024, activation="relu")
-        self.bn2 = layers.BatchNormalization()'''
-        self.decoder = DecCLSTMBlock([32, 16, 1], 5)
+        self.dense2 = layers.Dense(5120, activation="relu")
+        self.bn2 = layers.BatchNormalization()
+        self.rs = layers.Reshape((2, 16, 20, 8))
+        self.decoder = DecCLSTMBlock([8, 8, 4, 4, 1], 5)
         self.dropout = layers.Dropout(0.5)
 
-    def call(self, input_tensors, training=False, **kwargs):
-        x = self.encoder(input_tensors)
-        '''x = self.flat(x)
-        x = layers.concatenate([x, input_tensors[1]])
+    def call(self, inputs, training=False, **kwargs):
+        input_sequence, fan_settings = inputs
+        x = self.encoder(input_sequence)
+        print(x)
+        x = self.flat(x)
+        x = layers.concatenate([x, fan_settings])
         x = self.dense1(x)
         x = self.bn1(x)
         x = self.dense2(x)
-        x = self.bn2(x)'''
+        x = self.bn2(x)
+        x = self.rs(x)
+        print(x)
         x = self.decoder(x)
         if training:
             x = self.dropout(x, training=training)
@@ -93,8 +107,6 @@ class NextSequencePredictor(keras.Model):
 
 def main():
     model = NextSequencePredictor()
-    model.build(input_shape=(None, 2, 512, 620, 1))
-    model.summary()
 
 
 if __name__ == "__main__":
