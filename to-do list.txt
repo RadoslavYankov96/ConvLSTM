@@ -1,0 +1,7 @@
+### Check if saving and loading models works
+- load weights
+- resume training from a checkpoint
+
+### Customize model.fit 
+
+### Data augmentation

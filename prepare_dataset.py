@@ -55,7 +55,7 @@ class ImageSequenceDataset:
 
 def main():
     dataset = ImageSequenceDataset("C:\\Users\\rados\\Desktop\\studies\\thesis\\code\\ConvLSTM\\dataset\\train\\",
-                                   2, 1, 4, (512, 640, 1), 3)
+                                   2, 1, 4, (512, 640, 1))
     for element in dataset.load_data():
         print(element)
 

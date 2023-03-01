@@ -77,9 +77,9 @@ class NextSequencePredictor(keras.Model):
 
     def __init__(self):
         super().__init__()
-        self.encoder = EncCLSTMBlock([2, 4, 8, 16, 16], 5)
+        self.encoder = EncCLSTMBlock([2, 2, 4, 4, 8], 5)
         self.flat = layers.Flatten()
-        self.dense1 = layers.Dense(256)
+        self.dense1 = layers.Dense(128)
         self.bn1 = layers.BatchNormalization()
         self.dense2 = layers.Dense(5120, activation="relu")
         self.bn2 = layers.BatchNormalization()
@@ -90,7 +90,6 @@ class NextSequencePredictor(keras.Model):
     def call(self, inputs, training=False, **kwargs):
         input_sequence, fan_settings = inputs
         x = self.encoder(input_sequence)
-        print(x)
         x = self.flat(x)
         x = layers.concatenate([x, fan_settings])
         x = self.dense1(x)
@@ -98,7 +97,6 @@ class NextSequencePredictor(keras.Model):
         x = self.dense2(x)
         x = self.bn2(x)
         x = self.rs(x)
-        print(x)
         x = self.decoder(x)
         if training:
             x = self.dropout(x, training=training)
