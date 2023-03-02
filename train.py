@@ -6,11 +6,11 @@ from callbacks import tensorboard_cb, lr_scheduler, checkpoints, early_stopping
 TRAIN_PATH = "C:\\Users\\rados\\Desktop\\studies\\thesis\\code\\ConvLSTM\\dataset\\train\\"
 TEST_PATH = "C:\\Users\\rados\\Desktop\\studies\\thesis\\code\\ConvLSTM\\dataset\\test\\"
 IMG_DIMS = (512, 640, 1)
-constants = (TRAIN_PATH, TEST_PATH, IMG_DIMS)
+CONSTANTS = (TRAIN_PATH, TEST_PATH, IMG_DIMS)
 
 
-def construct_datasets(params):
-    train_path, test_path, img_dims = params
+def construct_datasets(constants):
+    train_path, test_path, img_dims = constants
     # Hyper parameters
     batch_size = 1
     sequence_length = 2
@@ -26,17 +26,17 @@ def construct_datasets(params):
 
 
 def main():
-    dataset_train, dataset_test = construct_datasets(constants)
+    dataset_train, dataset_test = construct_datasets(CONSTANTS)
 
     model = NextSequencePredictor()
     model.compile(loss='mse', optimizer='adam', metrics='mae')
-    model.fit(dataset_train, epochs=20, callbacks=[tensorboard_cb('tensorboard/lr'), lr_scheduler(),
-                                                   early_stopping(), checkpoints('checkpoints/first_try')],
+    model.fit(dataset_train, epochs=50, callbacks=[tensorboard_cb('tensorboard/chp'), lr_scheduler(),
+                                                   early_stopping(), checkpoints('checkpoints/first_try/')],
               validation_data=dataset_test)
     model.summary()
     # model.evaluate(dataset_test, verbose=2)
     # model.save_weights('saved_weights/') # , save_format='h5')
-    # model.save('saved_models/')
+    model.save('saved_models/')
 
 
 if __name__ == "__main__":

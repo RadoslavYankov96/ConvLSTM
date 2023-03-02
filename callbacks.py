@@ -1,5 +1,7 @@
 import tensorflow as tf
 from keras import callbacks
+import os
+
 # train_writer = tf.summary.create_file_writer("logs/train/")
 # test_writer = tf.summary.create_file_writer("logs/test/")
 
@@ -19,7 +21,7 @@ def lr_scheduler():
         if epoch < 1:
             return lr
         elif lr > min_lr:
-            return lr * 0.975
+            return lr * 0.98
         else:
             return lr
 
@@ -31,7 +33,7 @@ def lr_scheduler():
 
 def checkpoints(chp_dir):
     checkpoint = callbacks.ModelCheckpoint(
-        filepath=chp_dir,
+        filepath=os.path.join(chp_dir, "weights-{epoch:02d}-{val_loss:.2f}"),
         metric='val_loss',
         verbose=1,
         mode='min',
@@ -46,7 +48,7 @@ def checkpoints(chp_dir):
 def early_stopping():
     stopper = callbacks.EarlyStopping(
         monitor='val_loss',
-        min_delta=0.001,
+        min_delta=0.0005,
         patience=3,
         verbose=1,
     )
