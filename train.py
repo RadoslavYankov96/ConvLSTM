@@ -30,7 +30,7 @@ def main():
 
     model = NextSequencePredictor()
     model.compile(loss='mse', optimizer='adam', metrics='mae')
-    model.fit(dataset_train, epochs=30, callbacks=[tensorboard_cb('tensorboard/wide'), lr_scheduler(),
+    model.fit(dataset_train, epochs=1, callbacks=[tensorboard_cb('tensorboard/wide'), lr_scheduler(),
                                                     checkpoints('checkpoints/wide')],
               validation_data=dataset_test)
     model.summary()
