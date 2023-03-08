@@ -77,14 +77,14 @@ class NextSequencePredictor(keras.Model):
 
     def __init__(self):
         super().__init__()
-        self.encoder = EncCLSTMBlock([2, 2, 4, 4, 8], 5)
+        self.encoder = EncCLSTMBlock([2, 4, 8, 16, 32], 5)
         self.flat = layers.Flatten()
         self.dense1 = layers.Dense(128)
         self.bn1 = layers.BatchNormalization()
-        self.dense2 = layers.Dense(5120, activation="relu")
+        self.dense2 = layers.Dense(5120*2, activation="relu")
         self.bn2 = layers.BatchNormalization()
-        self.rs = layers.Reshape((2, 16, 20, 8))
-        self.decoder = DecCLSTMBlock([8, 8, 4, 4, 1], 5)
+        self.rs = layers.Reshape((2, 16, 20, 16))
+        self.decoder = DecCLSTMBlock([16, 16, 8, 4, 1], 5)
         self.dropout = layers.Dropout(0.5)
 
     def call(self, inputs, training=False, **kwargs):

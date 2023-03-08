@@ -49,7 +49,7 @@ def early_stopping():
     stopper = callbacks.EarlyStopping(
         monitor='val_loss',
         min_delta=0.0005,
-        patience=3,
+        patience=5,
         verbose=1,
     )
     return stopper
