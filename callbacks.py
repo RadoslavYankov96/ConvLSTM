@@ -21,7 +21,7 @@ def lr_scheduler():
         if epoch < 1:
             return lr
         elif lr > min_lr:
-            return lr * 0.98
+            return lr * 0.985
         else:
             return lr
 
@@ -48,7 +48,7 @@ def checkpoints(chp_dir):
 def early_stopping():
     stopper = callbacks.EarlyStopping(
         monitor='val_loss',
-        min_delta=0.0005,
+        min_delta=0.0001,
         patience=5,
         verbose=1,
     )

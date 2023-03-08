@@ -48,7 +48,7 @@ class ImageSequenceDataset:
             tf.TensorSpec(shape=(self.sequence_length, *self.img_shape), dtype=tf.float32)))
 
         dataset = dataset.batch(self.batch_size)
-        dataset = dataset.shuffle(buffer_size=5)
+        dataset = dataset.shuffle(100)
 
         return dataset
 

@@ -1,6 +1,7 @@
 from models import NextSequencePredictor
 from prepare_dataset import ImageSequenceDataset
 from callbacks import tensorboard_cb, lr_scheduler, checkpoints, early_stopping
+import tensorflow as tf
 
 # Constants
 TRAIN_PATH = "/home/itsnas/ueuua/BA/dataset/train/"
@@ -12,7 +13,7 @@ CONSTANTS = (TRAIN_PATH, VAL_PATH, IMG_DIMS)
 def construct_datasets(constants):
     train_path, val_path, img_dims = constants
     # Hyper parameters
-    batch_size = 8
+    batch_size = 4
     sequence_length = 2
     starting_index = 6 - sequence_length
 
@@ -26,18 +27,21 @@ def construct_datasets(constants):
 
 
 def main():
+    physical_devices = tf.config.list_physical_devices("GPU")
+    tf.config.experimental.set_memory_growth(physical_devices[0], True)
+
     dataset_train, dataset_val = construct_datasets(CONSTANTS)
 
     model = NextSequencePredictor()
     model.compile(loss='mse', optimizer='adam', metrics='mae')
-    model.fit(dataset_train, epochs=100, callbacks=[tensorboard_cb('tensorboard/remote_1'),
-    lr_scheduler(), early_stopping(), checkpoints('checkpoints/remote_1/')],
+    model.fit(dataset_train, epochs=100, callbacks=[tensorboard_cb('tensorboard/remote_2'),
+    lr_scheduler(), early_stopping(), checkpoints('checkpoints/remote_2/')],
     validation_data = dataset_val)
     
     model.summary()
     # model.evaluate(dataset_val, verbose=2)
     # model.save_weights('saved_weights/') # , save_format='h5')
-    model.save('saved_models/remote_1')
+    # model.save('saved_models/remote_3')
 
 
 if __name__ == "__main__":

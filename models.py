@@ -3,13 +3,14 @@ from keras import layers
 import numpy as np
 
 
+
 class ConvLSTMBlock(layers.Layer):
     def __init__(self, out_channels, kernel_size):
         super(ConvLSTMBlock, self).__init__()
         self.conv = layers.ConvLSTM2D(out_channels, kernel_size, padding='same', activation='tanh',
                                       recurrent_activation='hard_sigmoid', return_sequences=True)
         self.bn = layers.BatchNormalization()
-        self.mp = layers.MaxPooling3D(pool_size=(1, 2, 2), padding='same')
+        self.mp = layers.AveragePooling3D(pool_size=(1, 2, 2), padding='same')
 
     def call(self, input_tensor, training=False, **kwargs):
         x = self.conv(input_tensor)
@@ -77,15 +78,16 @@ class NextSequencePredictor(keras.Model):
 
     def __init__(self):
         super().__init__()
-        self.encoder = EncCLSTMBlock([2, 4, 8, 16, 32], 5)
+        self.encoder = EncCLSTMBlock([8, 16, 32, 64, 64], 5)
         self.flat = layers.Flatten()
-        self.dense1 = layers.Dense(128)
+        self.dense1 = layers.Dense(256)
         self.bn1 = layers.BatchNormalization()
-        self.dense2 = layers.Dense(5120*2, activation="relu")
+        self.dense2 = layers.Dense(5120*4, activation="relu")
         self.bn2 = layers.BatchNormalization()
-        self.rs = layers.Reshape((2, 16, 20, 16))
-        self.decoder = DecCLSTMBlock([16, 16, 8, 4, 1], 5)
-        self.dropout = layers.Dropout(0.5)
+        self.rs2 = layers.Reshape((2, 16, 20, 32))
+        self.decoder = DecCLSTMBlock([32, 16, 8, 4, 1], 5)
+        self.dropout1 = layers.Dropout(0.5)
+        self.dropout2 = layers.Dropout(0.6)
 
     def call(self, inputs, training=False, **kwargs):
         input_sequence, fan_settings = inputs
@@ -93,13 +95,16 @@ class NextSequencePredictor(keras.Model):
         x = self.flat(x)
         x = layers.concatenate([x, fan_settings])
         x = self.dense1(x)
+        if training:
+            x = self.dropout1(x, training=training)
         x = self.bn1(x)
         x = self.dense2(x)
-        x = self.bn2(x)
-        x = self.rs(x)
-        x = self.decoder(x)
         if training:
-            x = self.dropout(x, training=training)
+            x = self.dropout2(x, training=training)
+        x = self.bn2(x)
+        x = self.rs2(x)
+        x = self.decoder(x)
+        
         return x
 
 
