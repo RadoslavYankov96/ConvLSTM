@@ -9,11 +9,14 @@ class ConvLSTMBlock(layers.Layer):
         super(ConvLSTMBlock, self).__init__()
         self.conv = layers.ConvLSTM2D(out_channels, kernel_size, padding='same', activation='tanh',
                                       recurrent_activation='hard_sigmoid', return_sequences=True)
+        self.do = layers.Dropout(0.15)
         self.bn = layers.BatchNormalization()
-        self.mp = layers.AveragePooling3D(pool_size=(1, 2, 2), padding='same')
+        self.mp = layers.AveragePooling3D(pool_size=(1, 3, 3), padding='same')
 
     def call(self, input_tensor, training=False, **kwargs):
         x = self.conv(input_tensor)
+        if training:
+            x = self.do(x, training=training)
         x = self.bn(x, training=training)
         x = self.mp(x)
         return x
@@ -78,16 +81,16 @@ class NextSequencePredictor(keras.Model):
 
     def __init__(self):
         super().__init__()
-        self.encoder = EncCLSTMBlock([8, 16, 32, 64, 64], 5)
+        self.encoder = EncCLSTMBlock([16, 32, 64, 128, 256], 7)
         self.flat = layers.Flatten()
         self.dense1 = layers.Dense(256)
         self.bn1 = layers.BatchNormalization()
         self.dense2 = layers.Dense(5120*4, activation="relu")
         self.bn2 = layers.BatchNormalization()
         self.rs2 = layers.Reshape((2, 16, 20, 32))
-        self.decoder = DecCLSTMBlock([32, 16, 8, 4, 1], 5)
-        self.dropout1 = layers.Dropout(0.5)
-        self.dropout2 = layers.Dropout(0.6)
+        self.decoder = DecCLSTMBlock([32, 16, 8, 4, 1], 7)
+        self.dropout1 = layers.Dropout(0.7)
+        self.dropout2 = layers.Dropout(0.7)
 
     def call(self, inputs, training=False, **kwargs):
         input_sequence, fan_settings = inputs

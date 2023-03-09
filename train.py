@@ -6,12 +6,13 @@ import tensorflow as tf
 # Constants
 TRAIN_PATH = "/home/itsnas/ueuua/BA/dataset/train/"
 VAL_PATH = "/home/itsnas/ueuua/BA/dataset/val/"
+TEST_PATH = "/home/itsnas/ueuua/BA/dataset/test/"
 IMG_DIMS = (512, 640, 1)
-CONSTANTS = (TRAIN_PATH, VAL_PATH, IMG_DIMS)
+CONSTANTS = (TRAIN_PATH, VAL_PATH, TEST_PATH, IMG_DIMS)
 
 
 def construct_datasets(constants):
-    train_path, val_path, img_dims = constants
+    train_path, val_path, test_path, img_dims = constants
     # Hyper parameters
     batch_size = 4
     sequence_length = 2
@@ -19,29 +20,34 @@ def construct_datasets(constants):
 
     data_train = ImageSequenceDataset(train_path, sequence_length, batch_size, starting_index, img_dims)
     data_val = ImageSequenceDataset(val_path, sequence_length, batch_size, starting_index, img_dims)
+    data_test = ImageSequenceDataset(test_path, sequence_length, batch_size, starting_index, img_dims)
 
     dataset_train = data_train.create_dataset()
     dataset_val = data_val.create_dataset()
+    dataset_test = data_test.create_dataset()
 
-    return dataset_train, dataset_val
+    return dataset_train, dataset_val, dataset_test
 
 
 def main():
     physical_devices = tf.config.list_physical_devices("GPU")
     tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
-    dataset_train, dataset_val = construct_datasets(CONSTANTS)
+    dataset_train, dataset_val, dataset_test = construct_datasets(CONSTANTS)
 
     model = NextSequencePredictor()
     model.compile(loss='mse', optimizer='adam', metrics='mae')
-    model.fit(dataset_train, epochs=100, callbacks=[tensorboard_cb('tensorboard/remote_2'),
-    lr_scheduler(), early_stopping(), checkpoints('checkpoints/remote_2/')],
+    model.fit(dataset_train, epochs=100, callbacks=[tensorboard_cb('tensorboard/remote_5'),
+    lr_scheduler(), early_stopping(), checkpoints('checkpoints/remote_5/')],
     validation_data = dataset_val)
     
     model.summary()
     # model.evaluate(dataset_val, verbose=2)
     # model.save_weights('saved_weights/') # , save_format='h5')
     # model.save('saved_models/remote_3')
+    pred = model(dataset_test)
+    print(pred)
+    
 
 
 if __name__ == "__main__":
