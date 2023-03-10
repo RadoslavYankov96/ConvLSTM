@@ -11,7 +11,7 @@ class ConvLSTMBlock(layers.Layer):
                                       recurrent_activation='hard_sigmoid', return_sequences=True)
         self.do = layers.Dropout(0.15)
         self.bn = layers.BatchNormalization()
-        self.mp = layers.AveragePooling3D(pool_size=(1, 3, 3), padding='same')
+        self.mp = layers.MaxPooling3D(pool_size=(1, 3, 3), padding='same')
 
     def call(self, input_tensor, training=False, **kwargs):
         x = self.conv(input_tensor)
@@ -81,14 +81,14 @@ class NextSequencePredictor(keras.Model):
 
     def __init__(self):
         super().__init__()
-        self.encoder = EncCLSTMBlock([16, 32, 64, 128, 256], 7)
+        self.encoder = EncCLSTMBlock([16, 32, 64, 128, 256], 5)
         self.flat = layers.Flatten()
         self.dense1 = layers.Dense(256)
         self.bn1 = layers.BatchNormalization()
         self.dense2 = layers.Dense(5120*4, activation="relu")
         self.bn2 = layers.BatchNormalization()
         self.rs2 = layers.Reshape((2, 16, 20, 32))
-        self.decoder = DecCLSTMBlock([32, 16, 8, 4, 1], 7)
+        self.decoder = DecCLSTMBlock([32, 16, 8, 4, 1], 5)
         self.dropout1 = layers.Dropout(0.7)
         self.dropout2 = layers.Dropout(0.7)
 

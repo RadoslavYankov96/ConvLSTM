@@ -37,17 +37,14 @@ def main():
 
     model = NextSequencePredictor()
     model.compile(loss='mse', optimizer='adam', metrics='mae')
-    model.fit(dataset_train, epochs=100, callbacks=[tensorboard_cb('tensorboard/remote_5'),
-    lr_scheduler(), early_stopping(), checkpoints('checkpoints/remote_5/')],
+    model.fit(dataset_train, epochs=100, callbacks=[tensorboard_cb('tensorboard/remote_6'),
+    lr_scheduler(), early_stopping(), checkpoints('checkpoints/remote_6/')],
     validation_data = dataset_val)
     
     model.summary()
     # model.evaluate(dataset_val, verbose=2)
     # model.save_weights('saved_weights/') # , save_format='h5')
-    # model.save('saved_models/remote_3')
-    pred = model(dataset_test)
-    print(pred)
-    
+    # model.save('saved_models/remote_3')  
 
 
 if __name__ == "__main__":
