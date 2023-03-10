@@ -1,6 +1,8 @@
 from models import NextSequencePredictor
 from prepare_dataset import ImageSequenceDataset
 from callbacks import tensorboard_cb, lr_scheduler, checkpoints, early_stopping
+from matplotlib import pyplot as plt
+import numpy as np
 
 # Constants
 TRAIN_PATH = "C:\\Users\\rados\\Desktop\\studies\\thesis\\code\\ConvLSTM\\dataset\\train\\"
@@ -30,13 +32,19 @@ def main():
 
     model = NextSequencePredictor()
     model.compile(loss='mse', optimizer='adam', metrics='mae')
-    model.fit(dataset_train, epochs=1, callbacks=[tensorboard_cb('tensorboard/wide'), lr_scheduler(),
-                                                    checkpoints('checkpoints/wide')],
+    model.fit(dataset_train, epochs=10, callbacks=[tensorboard_cb('tensorboard/wide'), lr_scheduler(),
+                                                   checkpoints('checkpoints/wide')],
               validation_data=dataset_test)
     model.summary()
     # model.evaluate(dataset_test, verbose=2)
     # model.save_weights('saved_weights/') # , save_format='h5')
-    model.save('saved_models/')
+    # model.save('saved_models/')
+    preds = model.predict(dataset_test)
+    for pred in preds:
+        for img in pred:
+            img = 255 * np.array(img, dtype=np.float32)
+            plt.imshow(img, cmap="jet", vmin=50, vmax=170)
+            plt.show()
 
 
 if __name__ == "__main__":
