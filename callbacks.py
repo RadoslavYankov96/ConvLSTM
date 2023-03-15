@@ -18,10 +18,10 @@ def tensorboard_cb(log_dir):
 def lr_scheduler():
     def step_scheduler(epoch, lr):
         min_lr = 0.0001
-        if epoch < 1:
+        if epoch < 10:
             return lr
         elif lr > min_lr:
-            return lr * 0.985
+            return lr * 0.975
         else:
             return lr
 
@@ -33,23 +33,22 @@ def lr_scheduler():
 
 def checkpoints(chp_dir):
     checkpoint = callbacks.ModelCheckpoint(
-        filepath=os.path.join(chp_dir, "weights-{epoch:02d}-{val_loss:.2f}"),
-        metric='val_loss',
+        filepath=os.path.join(chp_dir),
+        metric='val_mae',
         verbose=1,
         mode='min',
         save_freq='epoch',
-        period=5,
-        save_weights_only=True,
-        save_best_only=False,
+        save_weights_only=False,
+        save_best_only=True,
     )
     return checkpoint
 
 
 def early_stopping():
     stopper = callbacks.EarlyStopping(
-        monitor='val_loss',
-        min_delta=0.0001,
-        patience=5,
+        monitor='val_mae',
+        min_delta=0,
+        patience=10,
         verbose=1,
     )
     return stopper
