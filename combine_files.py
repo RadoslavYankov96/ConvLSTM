@@ -15,4 +15,4 @@ for sequence in os.listdir(data_path):
         for i, h5name in enumerate(glob.glob('01022023*.h5')):
             h5old = h5py.File(h5name, 'r')
             data = h5old["D2_dataNorm"]
-            h5fw.create_dataset("frame " + str(i + 1), data=data)
+            h5fw.create_dataset(f"frame {str(i + 1).zfill(2)}", data=data)

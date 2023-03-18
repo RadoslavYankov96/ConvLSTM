@@ -2,6 +2,8 @@ import numpy as np
 import h5py as h5
 import os
 import tensorflow as tf
+import re
+from matplotlib import pyplot as plt
 
 
 class ImageSequenceDataset:
@@ -16,6 +18,7 @@ class ImageSequenceDataset:
     def load_experiment(self, file_path):
         with h5.File(file_path, 'r') as experiment:
             keys = list(experiment.keys())
+            # keys = sorted(keys, key=lambda s: int(re.search(r'\d+', s).group()))
             keys = keys[self.starting_index:]
             for i in range(len(keys) - 2 * self.sequence_length + 1):
                 input_images = []
@@ -48,7 +51,7 @@ class ImageSequenceDataset:
             tf.TensorSpec(shape=(self.sequence_length, *self.img_shape), dtype=tf.float32)))
 
         dataset = dataset.batch(self.batch_size)
-        dataset = dataset.shuffle(buffer_size=5)
+        # dataset = dataset.shuffle(buffer_size=5)
 
         return dataset
 
@@ -56,8 +59,17 @@ class ImageSequenceDataset:
 def main():
     dataset = ImageSequenceDataset("C:\\Users\\rados\\Desktop\\studies\\thesis\\code\\ConvLSTM\\dataset\\train\\",
                                    2, 1, 4, (512, 640, 1))
-    for element in dataset.load_data():
-        print(element)
+    dataset = dataset.create_dataset()
+    first_five_elements = dataset.take(5)
+    sequence_length = 2
+
+    for (input_sequences, fan_settings), target_sequences in first_five_elements:
+        # Input sequences
+        fig, axs = plt.subplots(1, sequence_length, figsize=(10, 2))
+        for i in range(sequence_length):
+            axs[i].imshow(input_sequences[0, i, :, :, 0], cmap='jet')
+            axs[i].axis('off')
+        plt.show()
 
 
 if __name__ == "__main__":

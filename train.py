@@ -1,4 +1,6 @@
 from models import NextSequencePredictor
+import tensorflow as tf
+import keras
 from prepare_dataset import ImageSequenceDataset
 from callbacks import tensorboard_cb, lr_scheduler, checkpoints, early_stopping
 from matplotlib import pyplot as plt
@@ -31,20 +33,28 @@ def main():
     dataset_train, dataset_test = construct_datasets(CONSTANTS)
 
     model = NextSequencePredictor()
+    #model = keras.models.load_model("saved_models//model_training_7//", compile=False)
+
     model.compile(loss='mse', optimizer='adam', metrics='mae')
-    model.fit(dataset_train, epochs=10, callbacks=[tensorboard_cb('tensorboard/wide'), lr_scheduler(),
-                                                   checkpoints('checkpoints/wide')],
+    model.fit(dataset_train, epochs=20, callbacks=[tensorboard_cb('tensorboard/blah'), lr_scheduler(),
+                                                   checkpoints('checkpoints/blah')],
               validation_data=dataset_test)
-    model.summary()
     # model.evaluate(dataset_test, verbose=2)
     # model.save_weights('saved_weights/') # , save_format='h5')
-    # model.save('saved_models/')
+    # model.save('saved_models/')'''
     preds = model.predict(dataset_test)
+    model.summary()
+    fig = plt.figure(figsize=(20, 20))
+    columns = 2
+    rows = 5
+    i = 1
     for pred in preds:
         for img in pred:
             img = 255 * np.array(img, dtype=np.float32)
-            plt.imshow(img, cmap="jet", vmin=50, vmax=170)
-            plt.show()
+            fig.add_subplot(rows, columns, i)
+            i = i+1
+            plt.imshow(img, cmap="jet")
+    plt.show()
 
 
 if __name__ == "__main__":
