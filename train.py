@@ -1,6 +1,6 @@
-from models import NextSequencePredictor
+from models import NextSequencePredictor, NextSequencePredictor_v2, NextSequencePredictor_v3
 from prepare_dataset import ImageSequenceDataset
-from callbacks import tensorboard_cb, lr_scheduler, checkpoints, early_stopping
+from callbacks import tensorboard_cb, lr_scheduler, checkpoints, early_stopping, shuffle_cb
 import tensorflow as tf
 
 # Constants
@@ -36,9 +36,10 @@ def main():
     dataset_train, dataset_val, dataset_test = construct_datasets(CONSTANTS)
 
     model = NextSequencePredictor()
-    model.compile(loss='mse', optimizer='adam', metrics='mae')
-    model.fit(dataset_train, epochs=100, callbacks=[tensorboard_cb('tensorboard/remote_6'),
-    lr_scheduler(), early_stopping(), checkpoints('checkpoints/remote_6/')],
+    optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
+    model.compile(loss='mae', optimizer=optimizer)
+    model.fit(dataset_train, epochs=300, callbacks=[tensorboard_cb('tensorboard/training_9'),
+    lr_scheduler(), early_stopping(), checkpoints('checkpoints/training_9/')],
     validation_data = dataset_val)
     
     model.summary()
