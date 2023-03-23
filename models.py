@@ -9,17 +9,17 @@ class ConvLSTMBlock(layers.Layer):
         super(ConvLSTMBlock, self).__init__()
         self.conv = layers.ConvLSTM2D(out_channels, kernel_size, padding='same', activation='tanh',
                                       recurrent_activation='hard_sigmoid', return_sequences=True,
-                                      kernel_regularizer=regularizers.L2(), strides=2)
+                                      kernel_regularizer=regularizers.L2())
         # self.do = layers.Dropout(0.1)
         self.bn = layers.BatchNormalization()
-        # self.mp = layers.AveragePooling3D(pool_size=(1, 3, 3), padding='same')
+        self.mp = layers.AveragePooling3D(pool_size=(1, 2, 2), padding='same')
 
     def call(self, input_tensor, training=False, **kwargs):
         x = self.conv(input_tensor)
         '''if training:
             x = self.do(x, training=training)'''
         x = self.bn(x, training=training)
-        # x = self.mp(x)
+        x = self.mp(x)
         return x
 
 
@@ -85,20 +85,20 @@ class NextSequencePredictor(tf.keras.Model):
 
     def __init__(self):
         super().__init__()
-        self.encoder = EncCLSTMBlock([2, 2, 4, 4, 8, 16], 5)
+        self.encoder = EncCLSTMBlock([8, 16, 32, 64, 128, 128], 5)
         self.flat = layers.Flatten()
-        self.dense1 = layers.Dense(100)
+        self.dense1 = layers.Dense(100, activation='relu', kernel_initializer='he_normal')
         self.bn1 = layers.BatchNormalization()
-        '''self.dense2 = layers.Dense(512)
-        self.bn2 = layers.BatchNormalization()'''
-        self.dense3 = layers.Dense(512)
+        self.dense2 = layers.Dense(512, activation='relu', kernel_initializer='he_normal')
+        self.bn2 = layers.BatchNormalization()
+        self.dense3 = layers.Dense(1024, activation='relu', kernel_initializer='he_normal')
         self.bn3 = layers.BatchNormalization()
-        self.dense4 = layers.Dense(5120, activation="relu")
+        self.dense4 = layers.Dense(5120*2, activation='relu', kernel_initializer='he_normal')
         self.bn4 = layers.BatchNormalization()
-        self.rs = layers.Reshape((2, 16, 20, 8))
-        self.decoder = DecCLSTMBlock([8, 4, 4, 2, 1], 5)
+        self.rs = layers.Reshape((2, 16, 20, 16))
+        self.decoder = DecCLSTMBlock([16, 8, 4, 2, 1], 5)
         self.dropout1 = layers.Dropout(0.8)
-        # self.dropout2 = layers.Dropout(0.6)
+        self.dropout2 = layers.Dropout(0.6)
         self.dropout3 = layers.Dropout(0.6)
         self.dropout4 = layers.Dropout(0.5)
 
@@ -111,10 +111,10 @@ class NextSequencePredictor(tf.keras.Model):
         if training:
             x = self.dropout1(x, training=training)
         x = self.bn1(x, training=training)
-        '''x = self.dense2(x)
+        x = self.dense2(x)
         if training:
             x = self.dropout2(x, training=training)
-        x = self.bn2(x, training=training)'''
+        x = self.bn2(x, training=training)
         x = self.dense3(x)
         if training:
             x = self.dropout3(x, training=training)
@@ -335,23 +335,23 @@ class DeconvBlock_v3(layers.Layer):
 class NextSequencePredictor_v3(tf.keras.Model):        
     def __init__(self):
         super().__init__()
-        self.conv_enc = ConvEncBlock_v3([4, 8, 16, 32, 64], 5)
-        self.lstm_enc = CLSTMBlock_v3([64, 64, 64], 5)
+        self.conv_enc = ConvEncBlock_v3([16, 32, 64, 128, 256], 3)
+        self.lstm_enc = CLSTMBlock_v3([256, 256, 256], 5)
         self.flat = layers.Flatten()
-        self.dense1 = layers.Dense(100, activation="relu")
+        self.dense1 = layers.Dense(100, activation='relu', kernel_initializer='he_normal')
         self.bn1 = layers.BatchNormalization()
-        self.dense2 = layers.Dense(512, activation="relu")
+        self.dense2 = layers.Dense(512, activation='relu', kernel_initializer='he_normal')
         self.bn2 = layers.BatchNormalization()
-        # self.dense3 = layers.Dense(1024)
-        # self.bn3 = layers.BatchNormalization()
-        self.dense4 = layers.Dense(5120, activation="relu")
+        self.dense3 = layers.Dense(1024, activation='relu', kernel_initializer='he_normal')
+        self.bn3 = layers.BatchNormalization()
+        self.dense4 = layers.Dense(5120*2, activation='relu', kernel_initializer='he_normal')
         self.bn4 = layers.BatchNormalization()
-        self.rs = layers.Reshape((2, 8, 10, 32))
-        self.lstm_dec = CLSTMBlock_v3([32, 32, 32], 5)
-        self.deconv = DeconvBlock_v3([32, 16, 8, 4, 2, 1], 5)
+        self.rs = layers.Reshape((2, 8, 10, 64))
+        self.lstm_dec = CLSTMBlock_v3([64, 64, 64], 5)
+        self.deconv = DeconvBlock_v3([64, 32, 16, 8, 4, 1], 3)
         self.dropout1 = layers.Dropout(0.8)
         self.dropout2 = layers.Dropout(0.6)
-        # self.dropout3 = layers.Dropout(0.6)
+        self.dropout3 = layers.Dropout(0.6)
         self.dropout4 = layers.Dropout(0.5)
         
     def call(self, inputs, training=False, **kwargs):
@@ -368,10 +368,10 @@ class NextSequencePredictor_v3(tf.keras.Model):
         if training:
             x = self.dropout2(x, training=training)
         x = self.bn2(x, training=training)
-        '''x = self.dense3(x)
+        x = self.dense3(x)
         if training:
             x = self.dropout3(x, training=training)
-        x = self.bn3(x, training=training)'''
+        x = self.bn3(x, training=training)
         x = self.dense4(x)
         if training:
             x = self.dropout4(x, training=training)

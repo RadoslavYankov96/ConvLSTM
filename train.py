@@ -10,6 +10,10 @@ TEST_PATH = "/home/itsnas/ueuua/BA/dataset/test/"
 IMG_DIMS = (512, 640, 1)
 CONSTANTS = (TRAIN_PATH, VAL_PATH, TEST_PATH, IMG_DIMS)
 
+def custom_absolute_error(y_true, y_pred):
+    absolute_error = tf.abs(y_true - y_pred)
+    return tf.reduce_sum(absolute_error)
+
 
 def construct_datasets(constants):
     train_path, val_path, test_path, img_dims = constants
@@ -37,9 +41,9 @@ def main():
 
     model = NextSequencePredictor()
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
-    model.compile(loss='mae', optimizer=optimizer)
-    model.fit(dataset_train, epochs=300, callbacks=[tensorboard_cb('tensorboard/training_9'),
-    lr_scheduler(), early_stopping(), checkpoints('checkpoints/training_9/')],
+    model.compile(loss='mape', optimizer=optimizer)
+    model.fit(dataset_train, epochs=300, callbacks=[tensorboard_cb('tensorboard/training_14'),
+    lr_scheduler(), early_stopping(), checkpoints('checkpoints/training_14/')],
     validation_data = dataset_val)
     
     model.summary()
