@@ -20,6 +20,9 @@ def gb_homogeneity_score(img_dir):
 
 
 def statistical_homogeneity_score(array):
+    array = array[:, -1, :, :, :]
+    array = np.squeeze(array)
+    array = np.multiply(array, 255)
     unique, counts = np.unique(array, return_counts=True)
     mean = np.sum(np.multiply(unique, counts))/np.sum(counts)
     sum_of_deviations = 0
@@ -28,13 +31,14 @@ def statistical_homogeneity_score(array):
     var = sum_of_deviations/np.sum(counts)
     std = math.sqrt(var)
 
-    print(f"mean = {mean}")
-    print(f"std = {std}")
+    '''print(f"mean = {mean}")
+    print(f"std = {std}")'''
     return mean, std
 
 
 def statistical_homogeneity_score_from_img(img_dir):
     files = os.listdir(img_dir)
+    print(files[-1])
     img = np.load(os.path.join(img_dir, files[-1]))
     unique, counts = np.unique(img, return_counts=True)
     mean = np.sum(np.multiply(unique, counts))/np.sum(counts)
@@ -51,7 +55,7 @@ def statistical_homogeneity_score_from_img(img_dir):
 
 if __name__ == "__main__":
     print(f"gradient-based score: {gb_homogeneity_score('images')}")
-    mean, std = statistical_homogeneity_score("images")
+    mean, std = statistical_homogeneity_score_from_img("images")
     # print(np.unique(counts))
     '''plt.bar(unique, counts, color='g', width=.8,  align='center')
     plt.axvline(mean, color='r', label="mean")
