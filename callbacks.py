@@ -35,10 +35,10 @@ def tensorboard_cb(log_dir):
 def lr_scheduler():
     def step_scheduler(epoch, lr):
         min_lr = 0.00001
-        if epoch < 100:
+        if epoch < 20:
             return lr
         elif lr > min_lr:
-            return lr * 0.99
+            return lr * 0.975
         else:
             return lr
 
@@ -66,7 +66,7 @@ def early_stopping():
         monitor='val_loss',
         min_delta=0,
         mode='min',
-        patience=20,
+        patience=50,
         verbose=1,
     )
     return stopper

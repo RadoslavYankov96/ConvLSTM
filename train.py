@@ -1,4 +1,4 @@
-from models import NextSequencePredictor, NextSequencePredictor_v2, NextSequencePredictor_v3
+from models import NextSequencePredictor, NextSequencePredictor_v4, NextSequencePredictor_v3
 from prepare_dataset import ImageSequenceDataset
 from callbacks import tensorboard_cb, lr_scheduler, checkpoints, early_stopping, shuffle_cb
 import tensorflow as tf
@@ -40,10 +40,10 @@ def main():
     dataset_train, dataset_val, dataset_test = construct_datasets(CONSTANTS)
 
     model = NextSequencePredictor()
-    optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
+    optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
     model.compile(loss='mape', optimizer=optimizer)
-    model.fit(dataset_train, epochs=300, callbacks=[tensorboard_cb('tensorboard/training_14'),
-    lr_scheduler(), early_stopping(), checkpoints('checkpoints/training_14/')],
+    model.fit(dataset_train, epochs=300, callbacks=[tensorboard_cb('tensorboard/training_42'),
+    lr_scheduler(), early_stopping(), checkpoints('checkpoints/training_42/')],
     validation_data = dataset_val)
     
     model.summary()
