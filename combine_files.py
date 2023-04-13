@@ -3,13 +3,13 @@ import h5py
 import glob
 from pathlib import Path
 
-data_path = Path("/home/itsnas/ueuua/BA/extra_images/")
+data_path = Path("/home/itsnas/ueuua/BA/extra_images/fan_check")
 
 
 for sequence in os.listdir(data_path):
     print(sequence)
     experiment_path = os.path.join(data_path, sequence)
-    os.chdir(f"{data_path}/dataset")
+    os.chdir(f"{data_path}/sequence")
     with h5py.File(f"{sequence}.h5", mode='w') as h5fw:
         os.chdir(experiment_path)
         for i, h5name in enumerate(sorted(glob.glob('01022023*.h5'))):

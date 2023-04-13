@@ -41,6 +41,7 @@ class ImageSequenceDataset:
     def get_metadata(file):
         name_list = list(int(i) if i.isdigit() else i for i in file.split("_"))
         fan_settings = np.array(name_list[3:6], dtype=np.float32)
+        fan_settings = fan_settings/100
         return fan_settings
 
     def create_dataset(self):

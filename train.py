@@ -18,7 +18,7 @@ def custom_absolute_error(y_true, y_pred):
 def construct_datasets(constants):
     train_path, val_path, test_path, img_dims = constants
     # Hyper parameters
-    batch_size = 4
+    batch_size = 8
     sequence_length = 2
     starting_index = 6 - sequence_length
 
@@ -42,8 +42,8 @@ def main():
     model = NextSequencePredictor()
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
     model.compile(loss='mape', optimizer=optimizer)
-    model.fit(dataset_train, epochs=300, callbacks=[tensorboard_cb('tensorboard/training_42'),
-    lr_scheduler(), early_stopping(), checkpoints('checkpoints/training_42/')],
+    model.fit(dataset_train, epochs=300, callbacks=[tensorboard_cb('tensorboard/training_45'),
+    lr_scheduler(), early_stopping(), checkpoints('checkpoints/training_45/')],
     validation_data = dataset_val)
     
     model.summary()

@@ -94,10 +94,10 @@ class NextSequencePredictor(tf.keras.Model):
         super().__init__()
         self.encoder = EncCLSTMBlock([32, 32, 64, 64, 128, 128, 128], 3)
         self.flat = layers.Flatten()
-        self.dense1 = layers.Dense(100, activation='relu', kernel_initializer='he_normal',
+        '''self.dense1 = layers.Dense(1024, activation='relu', kernel_initializer='he_normal',
         kernel_regularizer=regularizers.L2())
         self.bn1 = layers.BatchNormalization()
-        '''self.dense2 = layers.Dense(512, activation='relu', kernel_initializer='he_normal',
+        self.dense2 = layers.Dense(512, activation='relu', kernel_initializer='he_normal',
         kernel_regularizer=regularizers.L2())
         self.bn2 = layers.BatchNormalization()
         self.dense3 = layers.Dense(1024, activation='relu', kernel_initializer='he_normal')
@@ -107,7 +107,7 @@ class NextSequencePredictor(tf.keras.Model):
         self.bn4 = layers.BatchNormalization()
         self.rs = layers.Reshape((2, 4, 5, 128))
         self.decoder = DecCLSTMBlock([128, 128, 64, 32, 16, 8, 1], 3)
-        self.dropout1 = layers.Dropout(0.1)
+        # self.dropout1 = layers.Dropout(0.1)
         # self.dropout2 = layers.Dropout(0.2)
         # self.dropout3 = layers.Dropout(0.2)
         self.dropout4 = layers.Dropout(0.1)
@@ -116,12 +116,12 @@ class NextSequencePredictor(tf.keras.Model):
         input_sequence, fan_settings = inputs
         x = self.encoder(input_sequence)
         x = self.flat(x)
-        x = self.dense1(x)
+        x = layers.concatenate([x, fan_settings])
+        '''x = self.dense1(x)
         if training:
             x = self.dropout1(x, training=training)
         x = self.bn1(x, training=training)
-        x = layers.concatenate([x, fan_settings])
-        '''x = self.dense2(x)
+        x = self.dense2(x)
         if training:
             x = self.dropout2(x, training=training)
         x = self.bn2(x, training=training)
