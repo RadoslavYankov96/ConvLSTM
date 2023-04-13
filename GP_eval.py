@@ -7,12 +7,14 @@ def eaSimple_checkpointing(population, toolbox, cxpb, mutpb, ngen, stats=None,
              halloffame=None, verbose=False, checkpoint=None, frequency = 1):
     FREQ = frequency
     if checkpoint:
+        print ("checkpoint found!")
         # A file name has been given, then load the data from the file
         with open(checkpoint, "rb") as cp_file:
             cp = dill.load(cp_file)
         population = cp["population"]
         start_gen = cp["generation"]
         halloffame = cp["halloffame"]
+        print(len(halloffame))
         logbook = cp["logbook"]
         random.setstate(cp["rndstate"])
         
@@ -52,16 +54,18 @@ def eaSimple_checkpointing(population, toolbox, cxpb, mutpb, ngen, stats=None,
             ind.fitness.values = fit
 
         halloffame.update(population)
+        print("half of fame: ", len(halloffame))
         population[:] = offspring
         record = stats.compile(population) if stats else {}
         logbook.record(gen=gen, nevals=len(invalid_ind), **record)
 
         if gen % FREQ == 0:
             # Fill the dictionary using the dict(key=value[, ...]) constructor
+            print(len(halloffame))
             cp = dict(population=population, generation=gen, halloffame=halloffame,
                       logbook=logbook, rndstate=random.getstate())
             with open("GP_checkpoints/first_try_load.pkl", "wb") as cp_file:
                 dill.dump(cp, cp_file)
         
-    return population, logbook
+    return population, logbook, halloffame
 

@@ -5,6 +5,7 @@ import tensorflow as tf
 from deap import creator, base, gp, tools, algorithms
 import operator
 from image_analysis import statistical_homogeneity_score
+from GP_eval import eaSimple_checkpointing
 
 
 class Controller:
@@ -15,7 +16,7 @@ class Controller:
     def read_inputs(self):
         imgs = []
         experiments = os.listdir(self.input_path)
-        experiments = experiments[-6:-4]
+        experiments = experiments[-2:]
         for img in experiments:
             img_path = os.path.join(self.input_path, img)
             imgs.append(np.load(img_path))
@@ -27,6 +28,7 @@ class Controller:
         imgs = self.read_inputs()
         input_sequence = self.model.encoder(imgs)
         input_vector = self.model.flat(input_sequence)
+        
         return input_vector.numpy()
 
     def decode_prediction(self, input_vector, fan_settings):
@@ -91,18 +93,18 @@ class Controller:
 
     @classmethod
     def create_primitives(cls, self) -> object:
-        pset = gp.PrimitiveSetTyped("MAIN", [float]*81920, list)
+        pset = gp.PrimitiveSetTyped("MAIN", [float]*5120, list)
         pset.addPrimitive(operator.add, [float, float], float)
         pset.addPrimitive(operator.sub, [float, float], float)
         pset.addPrimitive(operator.mul, [float, float], float)
         pset.addPrimitive(operator.neg, [float], float)
         pset.addPrimitive(self.create_list, [float, float, float], list)
-        pset.addPrimitive(self.protected_div, [float, float], float)
+        '''pset.addPrimitive(self.protected_div, [float, float], float)
         pset.addPrimitive(self.add_3, [float, float, float], float)
         pset.addPrimitive(self.mul_3, [float, float, float], float)
         pset.addPrimitive(self.inverse, [float], float)
         pset.addPrimitive(self.greater, [float, float], float)
-        pset.addPrimitive(self.lesser, [float, float], float)
+        pset.addPrimitive(self.lesser, [float, float], float)'''
 
 
         '''pset.addEphemeralConstant(f"random_parameter_{random.uniform(-3,3)}", lambda: random.uniform(-1, 1), float)
@@ -158,8 +160,8 @@ class Controller:
     @staticmethod
     def evolution(pop, toolbox):
         # only 1 solution is asked:
-        hof = tools.HallOfFame(5)
-        pop, log = algorithms.eaSimple(pop, toolbox, 0.65, 0.05, 20, halloffame=hof, verbose=False)
+        hof = tools.HallOfFame(10)
+        pop, log, hof = eaSimple_checkpointing(pop, toolbox, 0.65, 0.05, 10, halloffame=hof, verbose=False, checkpoint='GP_checkpoints/first_try.pkl')
         return hof, pop
 
     @staticmethod
@@ -170,13 +172,14 @@ class Controller:
 
 
 if __name__ == "__main__":
-    model = tf.keras.models.load_model("checkpoints/training_33/", compile=False)
+    model = tf.keras.models.load_model("checkpoints/training_44/", compile=False)
     model.summary()
     img_path = 'images'
     controller = Controller(model, img_path)
     toolbox = controller.toolbox_creator(controller)
     population = controller.population_initializer(20, toolbox)
     hof, pop = controller.evolution(population, toolbox)
+    print(len(hof))
     for individual in hof:
         std = controller.evaluate(individual)
         print(std)
