@@ -2,6 +2,7 @@ import os
 import random
 import numpy as np
 import tensorflow as tf
+import h5py as h5
 from deap import creator, base, gp, tools, algorithms
 import operator
 from image_analysis import statistical_homogeneity_score
@@ -15,11 +16,11 @@ class Controller:
 
     def read_inputs(self):
         imgs = []
-        experiments = os.listdir(self.input_path)
-        experiments = experiments[-2:]
-        for img in experiments:
-            img_path = os.path.join(self.input_path, img)
-            imgs.append(np.load(img_path))
+        
+        with h5.File(self.input_path, 'r') as experiment:
+            imgs.append(np.expand_dims(np.array(experiment['frame 6'], dtype=np.float32), axis=-1))
+            imgs.append(np.expand_dims(np.array(experiment['frame 7'], dtype=np.float32), axis=-1))
+   
         input_sequence = np.expand_dims(np.stack(tuple(imgs)), axis=0)
 
         return input_sequence
@@ -124,7 +125,7 @@ class Controller:
         creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMin)
 
         toolbox = base.Toolbox()
-        toolbox.register("expr", gp.genHalfAndHalf, pset=pset, min_=10, max_=15)
+        toolbox.register("expr", gp.genHalfAndHalf, pset=pset, min_=10, max_=25)
         toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr)
         toolbox.register("population", tools.initRepeat, list, toolbox.individual)
         toolbox.register("compile", gp.compile, pset=pset)
@@ -161,7 +162,7 @@ class Controller:
     def evolution(pop, toolbox):
         # only 1 solution is asked:
         hof = tools.HallOfFame(10)
-        pop, log, hof = eaSimple_checkpointing(pop, toolbox, 0.65, 0.05, 10, halloffame=hof, verbose=False, checkpoint='GP_checkpoints/first_try.pkl')
+        pop, log, hof = eaSimple_checkpointing(pop, toolbox, 0.65, 0.05, 10, halloffame=hof, verbose=False, checkpoint='GP_checkpoints/first_training.pkl')
         return hof, pop
 
     @staticmethod
@@ -174,12 +175,16 @@ class Controller:
 if __name__ == "__main__":
     model = tf.keras.models.load_model("checkpoints/training_44/", compile=False)
     model.summary()
-    img_path = 'images'
-    controller = Controller(model, img_path)
-    toolbox = controller.toolbox_creator(controller)
-    population = controller.population_initializer(20, toolbox)
-    hof, pop = controller.evolution(population, toolbox)
-    print(len(hof))
-    for individual in hof:
-        std = controller.evaluate(individual)
-        print(std)
+    data_path = '/home/itsnas/ueuua/BA/dataset/train'
+    for experiment in os.listdir(data_path):
+        print(experiment)
+        img_path = os.path.join(data_path, experiment)
+        
+        controller = Controller(model, img_path)
+        toolbox = controller.toolbox_creator(controller)
+        population = controller.population_initializer(200, toolbox)
+        hof, pop = controller.evolution(population, toolbox)
+        
+        for individual in hof:
+            std = controller.evaluate(individual)
+            print(std)

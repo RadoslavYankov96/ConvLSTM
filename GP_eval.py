@@ -2,10 +2,15 @@ from deap import creator, tools, algorithms
 import random
 import dill
 import numpy
+import os
 
 def eaSimple_checkpointing(population, toolbox, cxpb, mutpb, ngen, stats=None,
              halloffame=None, verbose=False, checkpoint=None, frequency = 1):
     FREQ = frequency
+    
+    if os.path.isfile(checkpoint) == False:
+        checkpoint = None
+        
     if checkpoint:
         print ("checkpoint found!")
         # A file name has been given, then load the data from the file
@@ -14,7 +19,6 @@ def eaSimple_checkpointing(population, toolbox, cxpb, mutpb, ngen, stats=None,
         population = cp["population"]
         start_gen = cp["generation"]
         halloffame = cp["halloffame"]
-        print(len(halloffame))
         logbook = cp["logbook"]
         random.setstate(cp["rndstate"])
         
@@ -61,10 +65,10 @@ def eaSimple_checkpointing(population, toolbox, cxpb, mutpb, ngen, stats=None,
 
         if gen % FREQ == 0:
             # Fill the dictionary using the dict(key=value[, ...]) constructor
-            print(len(halloffame))
+            
             cp = dict(population=population, generation=gen, halloffame=halloffame,
                       logbook=logbook, rndstate=random.getstate())
-            with open("GP_checkpoints/first_try_load.pkl", "wb") as cp_file:
+            with open("GP_checkpoints/first_training.pkl", "wb") as cp_file:
                 dill.dump(cp, cp_file)
         
     return population, logbook, halloffame

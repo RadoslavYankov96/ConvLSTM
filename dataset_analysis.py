@@ -3,6 +3,7 @@ import h5py as h5
 import numpy as np
 from matplotlib import pyplot as plt
 import math
+import glob
 
 
 # FIRST_INDEX = 4
@@ -39,10 +40,21 @@ def get_mean_std(histogram):
 
 
     return avg, sd
-
+    
+    
+def create_csv(data_path, work_dir):
+    os.chdir(data_path)
+    files = glob.glob('*.h5')
+    print(files)
+    os.chdir(work_dir)
+    np.savetxt('dataset_info.csv',
+               files,
+               delimiter="_",
+               fmt='%s'
+               )
 
 if __name__ == "__main__":
-    hist = dataset_histogram("dataset", 4)
+    '''hist = dataset_histogram("dataset", 4)
     mean, std = get_mean_std(hist)
     print(mean, std)
     plt.axvline(x=mean, color='r', label='mean')
@@ -50,4 +62,7 @@ if __name__ == "__main__":
     plt.axvline(x=mean+2*std, color='b', label='2 std right')
     plot_histogram(hist)
     plt.legend()
-    plt.show()
+    plt.show()'''
+    data_path = '/home/itsnas/ueuua/BA/dataset/train'
+    work_dir = '/home/itsnas/ueuua/BA/dataset'
+    create_csv(data_path, work_dir)
