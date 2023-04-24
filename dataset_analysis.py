@@ -4,6 +4,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import math
 import glob
+import re 
 
 
 # FIRST_INDEX = 4
@@ -14,7 +15,9 @@ def dataset_histogram(data_root, first_index):
         for file in os.listdir(data_path):
             file_path = os.path.join(data_path, file)
             with h5.File(file_path, 'r') as experiment:
-                keys = list(experiment.keys())[first_index:]
+                keys = list(experiment.keys())
+                keys = sorted(keys, key=lambda s: int(re.search(r'\d+', s).group()))
+                keys = keys[first_index:]
                 for key in keys:
                     img = np.array(experiment[key], dtype=np.float32)
                     unique, counts = np.unique(img, return_counts=True)
@@ -54,15 +57,23 @@ def create_csv(data_path, work_dir):
                )
 
 if __name__ == "__main__":
-    '''hist = dataset_histogram("dataset", 4)
+    hist = dataset_histogram("/home/itsnas/ueuua/BA/dataset", 4)
     mean, std = get_mean_std(hist)
     print(mean, std)
+    
+    os.chdir("/home/itsnas/ueuua/BA/visualizations")
+    
     plt.axvline(x=mean, color='r', label='mean')
     plt.axvline(x=mean-2*std, color='b', label='2 std left')
     plt.axvline(x=mean+2*std, color='b', label='2 std right')
     plot_histogram(hist)
+    plt.xlabel('normalized temperature', loc='right')
+    plt.ylabel('# of pixels', loc='top')
+    plt.title("Temperature Distribution of Pixels within the Dataset")
     plt.legend()
-    plt.show()'''
-    data_path = '/home/itsnas/ueuua/BA/dataset/train'
+    plt.tight_layout()
+    plt.savefig('dataset_summary.png')
+    
+    '''data_path = '/home/itsnas/ueuua/BA/dataset/train'
     work_dir = '/home/itsnas/ueuua/BA/dataset'
-    create_csv(data_path, work_dir)
+    create_csv(data_path, work_dir)'''

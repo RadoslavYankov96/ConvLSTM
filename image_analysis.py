@@ -7,7 +7,7 @@ import math
 
 def gb_homogeneity_score(img_dir):
     files = os.listdir(img_dir)
-    img = np.load(os.path.join(img_dir, files[-2]))
+    img = np.load(os.path.join(img_dir, files[-4:-2]))
     img = np.reshape(img, (512, 640))
     sobel_x = np.abs(cv2.Sobel(img, cv2.CV_32F, 1, 0, ksize=3), dtype=np.float32)
     sobel_y = np.abs(cv2.Sobel(img, cv2.CV_32F, 0, 1, ksize=3), dtype=np.float32)
@@ -54,7 +54,7 @@ def statistical_homogeneity_score_from_img(img_dir):
 
 
 if __name__ == "__main__":
-    print(f"gradient-based score: {gb_homogeneity_score('images')}")
+    # print(f"gradient-based score: {gb_homogeneity_score('images')}")
     mean, std = statistical_homogeneity_score_from_img("images")
     # print(np.unique(counts))
     '''plt.bar(unique, counts, color='g', width=.8,  align='center')
