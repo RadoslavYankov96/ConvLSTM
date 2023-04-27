@@ -41,17 +41,18 @@ class ImageSequenceDataset:
     def get_metadata(file):
         name_list = list(int(i) if i.isdigit() else i for i in file.split("_"))
         fan_settings = np.array(name_list[3:6], dtype=np.float32)
+        fan_settings = np.tile(fan_settings, 10)
         fan_settings = fan_settings/100
         return fan_settings
 
     def create_dataset(self):
         dataset = tf.data.Dataset.from_generator(self.load_data, output_signature=(
             (tf.TensorSpec(shape=(self.sequence_length, *self.img_shape), dtype=tf.float32),
-             tf.TensorSpec(shape=(3,), dtype=tf.float32)),
+             tf.TensorSpec(shape=(30,), dtype=tf.float32)),
             tf.TensorSpec(shape=(self.sequence_length, *self.img_shape), dtype=tf.float32)))
 
         dataset = dataset.batch(self.batch_size)
-        dataset = dataset.shuffle(696)
+        dataset = dataset.shuffle(54)
 
         return dataset
 

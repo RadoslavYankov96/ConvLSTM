@@ -5,7 +5,7 @@ import tensorflow as tf
 import h5py as h5
 from deap import creator, base, gp, tools, algorithms
 import operator
-from image_analysis import statistical_homogeneity_score
+from image_analysis import homogeneity_evaluation
 from GP_eval import eaSimple_checkpointing
 
 
@@ -18,8 +18,8 @@ class Controller:
         imgs = []
         
         with h5.File(self.input_path, 'r') as experiment:
-            imgs.append(np.expand_dims(np.array(experiment['frame 6'], dtype=np.float32), axis=-1))
-            imgs.append(np.expand_dims(np.array(experiment['frame 7'], dtype=np.float32), axis=-1))
+            imgs.append(np.expand_dims(np.array(experiment['frame 6'], dtype=np.float64), axis=-1))
+            imgs.append(np.expand_dims(np.array(experiment['frame 7'], dtype=np.float64), axis=-1))
    
         input_sequence = np.expand_dims(np.stack(tuple(imgs)), axis=0)
 
@@ -29,14 +29,14 @@ class Controller:
         imgs = self.read_inputs()
         input_sequence = self.model.encoder(imgs)
         input_vector = self.model.flat(input_sequence)
+        input_vector = self.model.dense1(input_vector)
+        input_vector = self.model.bn1(input_vector)
         
         return input_vector.numpy()
 
     def decode_prediction(self, input_vector, fan_settings):
         x = np.concatenate((input_vector, fan_settings))
         x = np.expand_dims(x, axis=0)
-        x = self.model.dense1(x)
-        x = self.model.bn1(x)
         x = self.model.dense4(x)
         x = self.model.bn4(x)
         x = self.model.rs(x)
@@ -50,7 +50,7 @@ class Controller:
 
     @staticmethod
     def create_list(input_1, input_2, input_3):
-        return [input_1, input_2, input_3]
+        return np.array([input_1, input_2, input_3], dtype=np.float64)
 
     @staticmethod  # this ks a decorator.
     def protected_div(left, right):
@@ -94,12 +94,12 @@ class Controller:
 
     @classmethod
     def create_primitives(cls, self) -> object:
-        pset = gp.PrimitiveSetTyped("MAIN", [float]*5120, list)
-        pset.addPrimitive(operator.add, [float, float], float)
-        pset.addPrimitive(operator.sub, [float, float], float)
-        pset.addPrimitive(operator.mul, [float, float], float)
-        pset.addPrimitive(operator.neg, [float], float)
-        pset.addPrimitive(self.create_list, [float, float, float], list)
+        pset = gp.PrimitiveSetTyped("MAIN", [np.float64]*1024, list)
+        pset.addPrimitive(operator.add, [np.float64, np.float64], np.float64)
+        pset.addPrimitive(operator.sub, [np.float64, np.float64], np.float64)
+        pset.addPrimitive(operator.mul, [np.float64, np.float64], np.float64)
+        pset.addPrimitive(operator.neg, [np.float64], np.float64)
+        pset.addPrimitive(self.create_list, [np.float64, np.float64, np.float64], np.array)
         '''pset.addPrimitive(self.protected_div, [float, float], float)
         pset.addPrimitive(self.add_3, [float, float, float], float)
         pset.addPrimitive(self.mul_3, [float, float, float], float)
@@ -121,7 +121,7 @@ class Controller:
     def toolbox_creator(cls, self):
         pset = cls.create_primitives(self)
 
-        creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
+        creator.create("FitnessMin", base.Fitness, weights=(-10.0**5, -1.0))
         creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMin)
 
         toolbox = base.Toolbox()
@@ -147,11 +147,12 @@ class Controller:
         tree_input = np.squeeze(self.encode_inputs())
         fan_settings = func(*tree_input)
         fan_settings = self.sigmoid(fan_settings)
-        print(np.array(fan_settings).astype(int))
+        print(np.multiply(fan_settings, 100).astype(int))
+        #fan_settings = np.tile(fan_settings, 10)
         prediction = self.decode_prediction(tree_input, fan_settings)
-        mean, std = statistical_homogeneity_score(prediction.numpy())
+        std, hot_spot = homogeneity_evaluation(prediction.numpy())
 
-        return std,
+        return std, hot_spot
 
     @staticmethod
     def population_initializer(n_individual, toolbox):
@@ -162,18 +163,16 @@ class Controller:
     def evolution(pop, toolbox):
         # only 1 solution is asked:
         hof = tools.HallOfFame(10)
-        pop, log, hof = eaSimple_checkpointing(pop, toolbox, 0.65, 0.05, 10, halloffame=hof, verbose=False, checkpoint='GP_checkpoints/first_training.pkl')
+        pop, log, hof = eaSimple_checkpointing(pop, toolbox, 0.75, 0.05, 5, halloffame=hof, verbose=False, checkpoint='GP_checkpoints/second_training.pkl')
         return hof, pop
 
     @staticmethod
     def sigmoid(x):
-        for i, element in enumerate(x):
-            x[i] = 1 / (1 + np.exp(-element))
-        return np.multiply(x, 100)
+        return 1 / (1 + np.exp(-x, dtype=np.float64))
 
 
 if __name__ == "__main__":
-    model = tf.keras.models.load_model("checkpoints/training_44/", compile=False)
+    model = tf.keras.models.load_model("checkpoints/training_51/", compile=False)
     model.summary()
     data_path = '/home/itsnas/ueuua/BA/dataset/train'
     for experiment in os.listdir(data_path):
@@ -186,5 +185,5 @@ if __name__ == "__main__":
         hof, pop = controller.evolution(population, toolbox)
         
         for individual in hof:
-            std = controller.evaluate(individual)
-            print(std)
+            std, hot_spot = controller.evaluate(individual)
+            print(std, hot_spot)
