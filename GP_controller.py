@@ -18,8 +18,8 @@ class Controller:
         imgs = []
         
         with h5.File(self.input_path, 'r') as experiment:
-            imgs.append(np.expand_dims(np.array(experiment['frame 6'], dtype=np.float64), axis=-1))
             imgs.append(np.expand_dims(np.array(experiment['frame 7'], dtype=np.float64), axis=-1))
+            imgs.append(np.expand_dims(np.array(experiment['frame 8'], dtype=np.float64), axis=-1))
    
         input_sequence = np.expand_dims(np.stack(tuple(imgs)), axis=0)
 
@@ -58,6 +58,9 @@ class Controller:
             return left / right
         except ZeroDivisionError:
             return 1.0
+    @staticmethod        
+    def scale_ten(x):
+        return x/10.0
 
     @staticmethod
     def inverse(x):
@@ -91,17 +94,28 @@ class Controller:
             return left
         else:
             return right
+            
+    @staticmethod
+    def cos(x):
+        return np.cos(x)
+        
+    @staticmethod
+    def sin(x):
+        return np.sin(x)
 
     @classmethod
     def create_primitives(cls, self) -> object:
-        pset = gp.PrimitiveSetTyped("MAIN", [np.float64]*1024, list)
-        pset.addPrimitive(operator.add, [np.float64, np.float64], np.float64)
-        pset.addPrimitive(operator.sub, [np.float64, np.float64], np.float64)
-        pset.addPrimitive(operator.mul, [np.float64, np.float64], np.float64)
-        pset.addPrimitive(operator.neg, [np.float64], np.float64)
-        pset.addPrimitive(self.create_list, [np.float64, np.float64, np.float64], np.array)
-        '''pset.addPrimitive(self.protected_div, [float, float], float)
-        pset.addPrimitive(self.add_3, [float, float, float], float)
+        pset = gp.PrimitiveSetTyped("MAIN", [np.float32]*2048, np.ndarray)
+        pset.addPrimitive(operator.add, [np.float32, np.float32], np.float32)
+        pset.addPrimitive(operator.sub, [np.float32, np.float32], np.float32)
+        pset.addPrimitive(operator.mul, [np.float32, np.float32], np.float32)
+        pset.addPrimitive(operator.neg, [np.float32], np.float32)
+        pset.addPrimitive(self.sin, [np.float32], np.float32)
+        #pset.addPrimitive(self.scale_ten, [np.float64], np.float64)
+        pset.addPrimitive(self.create_list, [np.float32, np.float32, np.float32], np.ndarray)
+        #pset.addPrimitive(self.protected_div, [np.float32, np.float32], np.float32)
+        
+        '''pset.addPrimitive(self.add_3, [float, float, float], float)
         pset.addPrimitive(self.mul_3, [float, float, float], float)
         pset.addPrimitive(self.inverse, [float], float)
         pset.addPrimitive(self.greater, [float, float], float)
@@ -121,7 +135,7 @@ class Controller:
     def toolbox_creator(cls, self):
         pset = cls.create_primitives(self)
 
-        creator.create("FitnessMin", base.Fitness, weights=(-10.0**5, -1.0))
+        creator.create("FitnessMin", base.Fitness, weights=(-3.0, -3.0, -1.0))
         creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMin)
 
         toolbox = base.Toolbox()
@@ -133,11 +147,11 @@ class Controller:
 
         toolbox.register("select", tools.selTournament, tournsize=2)
         toolbox.register("mate", gp.cxOnePoint)
-        toolbox.register("expr_mut", gp.genFull, min_=0, max_=20)
+        toolbox.register("expr_mut", gp.genFull, min_=3, max_=10)
         toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 
-        toolbox.decorate("mate", gp.staticLimit(key=operator.attrgetter("height"), max_value=20))
-        toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter("height"), max_value=20))
+        toolbox.decorate("mate", gp.staticLimit(key=operator.attrgetter("height"), max_value=30))
+        toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter("height"), max_value=30))
 
         return toolbox
 
@@ -146,13 +160,14 @@ class Controller:
         func = toolbox.compile(expr=individual)
         tree_input = np.squeeze(self.encode_inputs())
         fan_settings = func(*tree_input)
+        #fan_settings = np.tanh(fan_settings)*5
         fan_settings = self.sigmoid(fan_settings)
         print(np.multiply(fan_settings, 100).astype(int))
-        #fan_settings = np.tile(fan_settings, 10)
+        fan_settings = np.tile(fan_settings, 100)
         prediction = self.decode_prediction(tree_input, fan_settings)
-        std, hot_spot = homogeneity_evaluation(prediction.numpy())
+        std, hs, fl = homogeneity_evaluation(prediction.numpy(), fan_settings)
 
-        return std, hot_spot
+        return std, hs, fl
 
     @staticmethod
     def population_initializer(n_individual, toolbox):
@@ -163,16 +178,24 @@ class Controller:
     def evolution(pop, toolbox):
         # only 1 solution is asked:
         hof = tools.HallOfFame(10)
-        pop, log, hof = eaSimple_checkpointing(pop, toolbox, 0.75, 0.05, 5, halloffame=hof, verbose=False, checkpoint='GP_checkpoints/second_training.pkl')
+        pop, log, hof = eaSimple_checkpointing(pop, toolbox, 0.8, 0.02, 5, halloffame=hof, verbose=False, checkpoint='GP_checkpoints/training_6.pkl')
         return hof, pop
 
     @staticmethod
     def sigmoid(x):
-        return 1 / (1 + np.exp(-x, dtype=np.float64))
+        fan_settings = []
+        for e in x:
+            if e < - 10:
+                fan_settings.append(0)
+            elif e > 10:
+                fan_settings.append(1.0)
+            else:
+                fan_settings.append(1 / (1 + np.exp(-e, dtype=np.float32)))
+        return fan_settings
 
 
 if __name__ == "__main__":
-    model = tf.keras.models.load_model("checkpoints/training_51/", compile=False)
+    model = tf.keras.models.load_model("checkpoints/training_72/", compile=False)
     model.summary()
     data_path = '/home/itsnas/ueuua/BA/dataset/train'
     for experiment in os.listdir(data_path):
@@ -181,9 +204,9 @@ if __name__ == "__main__":
         
         controller = Controller(model, img_path)
         toolbox = controller.toolbox_creator(controller)
-        population = controller.population_initializer(200, toolbox)
+        population = controller.population_initializer(300, toolbox)
         hof, pop = controller.evolution(population, toolbox)
         
         for individual in hof:
-            std, hot_spot = controller.evaluate(individual)
-            print(std, hot_spot)
+            std_score, hs_score, fl_score = controller.evaluate(individual)
+            print(std_score, hs_score, fl_score)
