@@ -1,18 +1,19 @@
-import cv2
 import numpy as np
 import os
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 import math
 
 
-def homogeneity_evaluation(array):
+def homogeneity_evaluation(array, fan_settings):
     array = array[:, -1, :, :, :]
     array = np.squeeze(array)
     mean = np.mean(array)
     std = np.std(array)
     hot_pixels = array - mean
     hot_score = np.sum(hot_pixels, where=hot_pixels>0)
-    return std, hot_score
+    fan_load = np.sum(fan_settings)
+    score = std + hot_score + fan_load
+    return std*100, hot_score/1000, fan_load/100
 
 
 def gb_homogeneity_score(img_dir):

@@ -52,7 +52,7 @@ class ImageSequenceDataset:
             tf.TensorSpec(shape=(self.sequence_length, *self.img_shape), dtype=tf.float32)))
 
         dataset = dataset.batch(self.batch_size)
-        dataset = dataset.shuffle(54)
+        #dataset = dataset.shuffle(54)
 
         return dataset
 

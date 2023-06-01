@@ -21,6 +21,7 @@ def eaSimple_checkpointing(population, toolbox, cxpb, mutpb, ngen, stats=None,
         halloffame = cp["halloffame"]
         logbook = cp["logbook"]
         random.setstate(cp["rndstate"])
+        halloffame.clear()
         
         stats = tools.Statistics(lambda ind: ind.fitness.values)
         stats.register("avg", numpy.mean)
@@ -68,7 +69,7 @@ def eaSimple_checkpointing(population, toolbox, cxpb, mutpb, ngen, stats=None,
             
             cp = dict(population=population, generation=gen, halloffame=halloffame,
                       logbook=logbook, rndstate=random.getstate())
-            with open('GP_checkpoints/second_training.pkl', "wb") as cp_file:
+            with open('GP_checkpoints/low_specialist_5.pkl', "wb") as cp_file:
                 dill.dump(cp, cp_file)
         
     return population, logbook, halloffame

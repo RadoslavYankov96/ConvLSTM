@@ -18,8 +18,8 @@ class Controller:
         imgs = []
         
         with h5.File(self.input_path, 'r') as experiment:
+            imgs.append(np.expand_dims(np.array(experiment['frame 6'], dtype=np.float64), axis=-1))
             imgs.append(np.expand_dims(np.array(experiment['frame 7'], dtype=np.float64), axis=-1))
-            imgs.append(np.expand_dims(np.array(experiment['frame 8'], dtype=np.float64), axis=-1))
    
         input_sequence = np.expand_dims(np.stack(tuple(imgs)), axis=0)
 
@@ -111,6 +111,7 @@ class Controller:
         pset.addPrimitive(operator.mul, [np.float32, np.float32], np.float32)
         pset.addPrimitive(operator.neg, [np.float32], np.float32)
         pset.addPrimitive(self.sin, [np.float32], np.float32)
+        pset.addPrimitive(self.cos, [np.float32], np.float32)
         #pset.addPrimitive(self.scale_ten, [np.float64], np.float64)
         pset.addPrimitive(self.create_list, [np.float32, np.float32, np.float32], np.ndarray)
         #pset.addPrimitive(self.protected_div, [np.float32, np.float32], np.float32)
@@ -135,11 +136,11 @@ class Controller:
     def toolbox_creator(cls, self):
         pset = cls.create_primitives(self)
 
-        creator.create("FitnessMin", base.Fitness, weights=(-3.0, -3.0, -1.0))
+        creator.create("FitnessMin", base.Fitness, weights=(-5.0, -5.0, -1.0))
         creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMin)
 
         toolbox = base.Toolbox()
-        toolbox.register("expr", gp.genHalfAndHalf, pset=pset, min_=10, max_=25)
+        toolbox.register("expr", gp.genHalfAndHalf, pset=pset, min_=15, max_=25)
         toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr)
         toolbox.register("population", tools.initRepeat, list, toolbox.individual)
         toolbox.register("compile", gp.compile, pset=pset)
@@ -178,7 +179,7 @@ class Controller:
     def evolution(pop, toolbox):
         # only 1 solution is asked:
         hof = tools.HallOfFame(10)
-        pop, log, hof = eaSimple_checkpointing(pop, toolbox, 0.8, 0.02, 5, halloffame=hof, verbose=False, checkpoint='GP_checkpoints/training_6.pkl')
+        pop, log, hof = eaSimple_checkpointing(pop, toolbox, 0.85, 0.05, 5, halloffame=hof, verbose=False, checkpoint='GP_checkpoints/training_12.pkl')
         return hof, pop
 
     @staticmethod
@@ -199,6 +200,7 @@ if __name__ == "__main__":
     model.summary()
     data_path = '/home/itsnas/ueuua/BA/dataset/train'
     for experiment in os.listdir(data_path):
+  
         print(experiment)
         img_path = os.path.join(data_path, experiment)
         
@@ -207,6 +209,3 @@ if __name__ == "__main__":
         population = controller.population_initializer(300, toolbox)
         hof, pop = controller.evolution(population, toolbox)
         
-        for individual in hof:
-            std_score, hs_score, fl_score = controller.evaluate(individual)
-            print(std_score, hs_score, fl_score)
